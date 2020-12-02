@@ -81,10 +81,10 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/id_nomefilme"
+            android:id="@+id/txt_nome_filme"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="100dp"
+            android:layout_marginStart="100dp"
             android:text="nome_Filme"
             android:textColor="#FFFFFF"
             android:textColorHighlight="#FFFFFF"
@@ -98,7 +98,7 @@
             android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/poster_filme_info"
+                android:id="@+id/img_poster_filme"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
@@ -113,7 +113,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/descricao_filme"
+                android:id="@+id/txt_descricao_filme"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
