@@ -1,6 +1,8 @@
 package com.example.meuapp.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -50,6 +52,7 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
     SensorManager sensorManager;
     Sensor sensor;
     long TempoEvento;
+    private static final int SOLICITAR_PERMISSAO = 1;
     private ListaFilmesAdapter FilmeAdapter1 = new ListaFilmesAdapter(this);
     private ListaFilmesAdapter FilmeAdapter2 = new ListaFilmesAdapter(this);
     private ListaFilmesAdapter FilmeAdapter3 = new ListaFilmesAdapter(this);
@@ -187,27 +190,51 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
         //TextView tv = (TextView) view.findViewById(R.id.tv_ml);
         //tv.getText().toString();
         TextView idText = ((View) view.getParent()).findViewById(R.id.txt_id);
+        ImageView imageView = ((View) view.getParent()).findViewById(R.id.poster_filme);
         id = idText.getText().toString();
 
         System.out.println(id);
         String mensagem = "Se liga nesse filme http://filmes.uniritter.edu.br/filme?id="+id+"&de=Emerson";
-        enviarWhatsApp(mensagem);
+        checarPermissao(mensagem, imageView);
+
 
 
     }
+    private void checarPermissao(String msg, ImageView img) {
 
-    public void enviarWhatsApp(String mensagem) {
+        // Verifica  o estado da permissão de WRITE_EXTERNAL_STORAGE
+        int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            // Se for diferente de PERMISSION_GRANTED, então vamos exibir a tela padrão
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, SOLICITAR_PERMISSAO);
+        } else {
+            // Senão vamos compartilhar a imagem
+            enviarWhatsApp(msg, img);
+        }
+
+    }
+
+    public void enviarWhatsApp(String mensagem, ImageView image) {
         PackageManager pm = getPackageManager();
         try {
 
             Intent waIntent = new Intent(Intent.ACTION_SEND);
-            waIntent.setType("text/plain");
+            waIntent.setType("*/*");
             String text = mensagem;
+            BitmapDrawable drawable = (BitmapDrawable) image.getDrawable();
+            Bitmap b = drawable.getBitmap();
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            b.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+            String path = MediaStore.Images.Media.insertImage(getContentResolver(), b, "shareImage", null);
+            Uri uri = Uri.parse(path);
 
             PackageInfo info = pm.getPackageInfo("com.whatsapp", PackageManager.GET_META_DATA);
             waIntent.setPackage("com.whatsapp");
 
             waIntent.putExtra(Intent.EXTRA_TEXT, text);
+            waIntent.putExtra(Intent.EXTRA_STREAM, uri);
             startActivity(waIntent);
 
         } catch (PackageManager.NameNotFoundException e) {

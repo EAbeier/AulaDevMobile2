@@ -41,13 +41,13 @@ public class FilmeInfo extends AppCompatActivity {
                 .into(imgFilme);
 
 
-        new Handler().postDelayed(new Runnable(){
+        /*new Handler().postDelayed(new Runnable(){
             @Override
             public void run(){
                 startActivity(new Intent(getBaseContext(), ListaFilmesActivity.class));
                 finish();
             }
-        },5000);
+        },5000);*/
 
 
     }
