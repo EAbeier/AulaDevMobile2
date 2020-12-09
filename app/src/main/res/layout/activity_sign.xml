@@ -172,12 +172,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|center_vertical"
+            android:clickable="true"
+            android:onClick="backlogin"
             android:text="Já cadastrado? Faça o Login"
             android:textColor="@android:color/holo_blue_dark"
             android:textSize="18sp" />
 
         <ProgressBar
-            android:id="@+id/progress_bar_registrar"
+            android:id="@+id/progress_bar_logar"
             style="?android:attr/progressBarStyle"
 
             android:layout_width="match_parent"

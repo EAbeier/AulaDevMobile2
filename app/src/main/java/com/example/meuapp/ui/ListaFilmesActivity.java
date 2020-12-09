@@ -1,5 +1,7 @@
 package com.example.meuapp.ui;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -34,13 +36,32 @@ import com.example.meuapp.data.connection.ApiService;
 import com.example.meuapp.data.connection.response.FilmesResult;
 import com.example.meuapp.data.mapper.FilmeMapper;
 import com.example.meuapp.data.model.Filme;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -52,6 +73,13 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
     SensorManager sensorManager;
     Sensor sensor;
     long TempoEvento;
+    FirebaseAuth  firebaseAuth;
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+
+    String userid;
+    List<Filme> listaFilmesFirebase= new ArrayList<>();
+    DocumentReference mDocRef = FirebaseFirestore.getInstance().document("filmes/favoritados");
     private static final int SOLICITAR_PERMISSAO = 1;
     private ListaFilmesAdapter FilmeAdapter1 = new ListaFilmesAdapter(this);
     private ListaFilmesAdapter FilmeAdapter2 = new ListaFilmesAdapter(this);
@@ -63,9 +91,9 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista_filmes);
+
 
 
         obtemFilmes();
@@ -90,9 +118,7 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
         sensorManager.unregisterListener(this);
     }
 
-    public void retorna(View view) {
-        startActivity(new Intent(getBaseContext(), ListaFilmesActivity.class));
-    }
+
 
     public void configuraAdapter() {
         rv1 = findViewById(R.id.rv_populares);
@@ -111,27 +137,63 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
     }
 
     private void obtemFilmes() {
-        ApiService.getInstance()
-                .FilmesPopulares( "799a1f0649735842ab24e00e80ad2b30", "pt-BR")
-                .enqueue(new Callback<FilmesResult>() {
+        firebaseAuth = FirebaseAuth.getInstance();
+        userid = firebaseAuth.getUid();
+        String  userCompara = userid;
+        db.collection("Filmes")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
-                    public void onResponse(@NotNull Call<FilmesResult> call, @NotNull Response<FilmesResult> response) {
-                        if (response.isSuccessful()) {
-                            final List<Filme> listaFilmes = FilmeMapper
-                                    .responseToDomain(response.body().getResultados());
-                            FilmeAdapter1.setFilmes(listaFilmes);;
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Map filmeMapFire =  document.getData();
+                                String idFilme  = (String)filmeMapFire.get("idFilme");
+                                String tituloFilme  = (String)filmeMapFire.get("tituloFilme");
+                                String userSalvo  = (String)filmeMapFire.get("user");
+                                String caminhoSalvo  = (String)filmeMapFire.get("caminhoPoster");
+                                String descricao = "";
+                                if(userCompara.equals(userSalvo)){
+                                    Filme filme = new Filme(tituloFilme, caminhoSalvo, idFilme, descricao);
+                                    listaFilmesFirebase.add(filme);
+                                }else{
+                                    Toast.makeText(ListaFilmesActivity.this, "deuRuim", Toast.LENGTH_SHORT).show();
+                                }
 
-                            configuraAdapter();
+
+                            }
                         } else {
-                            mostraErro();
+                            Log.w("erro", "Error getting documents.", task.getException());
                         }
                     }
-
-                    @Override
-                    public void onFailure(@NotNull Call<FilmesResult> call, Throwable t) {
-                        mostraErro();
-                    }
                 });
+        if(listaFilmesFirebase.isEmpty()) {
+            ApiService.getInstance()
+                    .FilmesPopulares("799a1f0649735842ab24e00e80ad2b30", "pt-BR")
+                    .enqueue(new Callback<FilmesResult>() {
+                        @Override
+                        public void onResponse(@NotNull Call<FilmesResult> call, @NotNull Response<FilmesResult> response) {
+                            if (response.isSuccessful()) {
+                                final List<Filme> listaFilmes = FilmeMapper
+                                        .responseToDomain(response.body().getResultados());
+                                FilmeAdapter1.setFilmes(listaFilmes);
+                                ;
+
+                                configuraAdapter();
+                            } else {
+                                mostraErro();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(@NotNull Call<FilmesResult> call, Throwable t) {
+                            mostraErro();
+                        }
+                    });
+        }else{
+            FilmeAdapter1.setFilmes(listaFilmesFirebase);
+            configuraAdapter();
+        }
         ApiService.getInstance()
                 .FilmesReproduzidos( "799a1f0649735842ab24e00e80ad2b30", "pt-BR")
                 .enqueue(new Callback<FilmesResult>() {
@@ -183,7 +245,40 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
         Toast.makeText(this, "Falha na comunicaçao da api", Toast.LENGTH_SHORT)
                 .show();
     }
+    public void Like(View view){
+        TextView id = ((View) view.getParent()).findViewById(R.id.txt_id);
+        TextView posterpath = ((View) view.getParent()).findViewById(R.id.txtPosterPath);
+        TextView titulo = ((View) view.getParent()).findViewById(R.id.txt_titulo_filme);
+        firebaseAuth = FirebaseAuth.getInstance();
+        userid = firebaseAuth.getUid();
+        String  user = userid;
+        String txtId = id.getText().toString();
+        String txtPosterPath = posterpath.getText().toString();
+        String txtTitulo = titulo.getText().toString();
+        if(userid.isEmpty() || txtId.isEmpty()
+                || txtPosterPath.isEmpty()||txtTitulo.isEmpty()){return;}
+        Map<String, Object> dataToSave = new HashMap<String, Object>();
+        dataToSave.put("user",user);
+        dataToSave.put("idFilme",txtId);
+        dataToSave.put("caminhoPoster",txtPosterPath);
+        dataToSave.put("tituloFilme",txtTitulo);
 
+        db.collection("Filmes")
+                .add(dataToSave)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d("sucess", "DocumentSnapshot added with ID: " + documentReference.getId());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("deu ruim", "Error adding document", e);
+                    }
+                });
+
+    }
     public void Share(View view) {
         String id;
 
@@ -298,6 +393,13 @@ public class ListaFilmesActivity extends AppCompatActivity implements SensorEven
         intent.putExtra(FilmeInfo.EXTRA_FILME, filme);
         startActivity(intent);
     }
+
+    public void logout(View view) {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+        finish();
+    }
+
 }
 
 

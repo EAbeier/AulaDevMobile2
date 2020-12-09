@@ -42,7 +42,7 @@ public class SignInActivity extends AppCompatActivity {
         emailCompara = findViewById(R.id.email);
         mResgitroBtn = findViewById(R.id.btn_registrar);
         mLoginLink = findViewById(R.id.tv_ja_cadastrado);
-        progressBar = findViewById(R.id.progress_bar_registrar);
+        progressBar = findViewById(R.id.progress_bar_logar);
 
         /*if(mAuth.getCurrentUser()!=null){
             startActivity(new Intent(getApplicationContext(),ListaFilmesActivity.class));
@@ -109,4 +109,7 @@ public class SignInActivity extends AppCompatActivity {
     }
 
 
+    public void backlogin(View view) {
+        startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+    }
 }

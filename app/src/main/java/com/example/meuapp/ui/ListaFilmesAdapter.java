@@ -73,6 +73,7 @@ public class ListaFilmesAdapter extends RecyclerView.Adapter<ListaFilmesAdapter.
             this.filme = filme;
             binding.txtTituloFilme.setText(filme.getTitulo());
             binding.txtId.setText(filme.getIdFilme());
+            binding.txtPosterPath.setText(filme.getCaminhoPoster());
             ImageView poster = this.binding.getRoot().findViewById(R.id.poster_filme);
             Picasso.get().load("https://image.tmdb.org/t/p/w500/"+filme.getCaminhoPoster())
                     .into(poster);

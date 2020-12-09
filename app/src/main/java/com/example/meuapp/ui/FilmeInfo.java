@@ -5,6 +5,7 @@ package com.example.meuapp.ui;
         import android.content.Intent;
         import android.os.Bundle;
         import android.os.Handler;
+        import android.view.View;
         import android.view.WindowManager;
         import android.widget.ImageView;
         import android.widget.TextView;
@@ -50,6 +51,10 @@ public class FilmeInfo extends AppCompatActivity {
         },5000);*/
 
 
+    }
+    public void retorna(View view) {
+        startActivity(new Intent(getBaseContext(), ListaFilmesActivity.class));
+        finish();
     }
 
 

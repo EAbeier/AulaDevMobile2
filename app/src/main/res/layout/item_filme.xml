@@ -20,6 +20,11 @@
             android:layout_height="300dp">
 
 
+            <TextView
+                android:id="@+id/txtPosterPath"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible" />
 
             <TextView
                 android:id="@+id/txt_id"
@@ -48,6 +53,16 @@
                 android:padding="16dp"
                 android:textAlignment="center"
                 tools:text="@{filme.titulo}" />
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="260dp"
+                android:clickable="true"
+                android:linksClickable="true"
+                android:onClick="Like"
+                app:srcCompat="@android:drawable/btn_star" />
 
             <ImageView
                 android:id="@+id/share"
